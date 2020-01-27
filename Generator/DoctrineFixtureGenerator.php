@@ -60,7 +60,7 @@ class DoctrineFixtureGenerator extends Generator
      * @param string|null $connectionName
      * @return bool
      */
-    public function generate(BundleInterface $bundle, $entity, $name, array $ids, $order, $connectionName = null, $overwrite = false, $isFqcnEntity = false, bool $skipEmptyFixture = false)
+    public function generate(BundleInterface $bundle, $entity, $name, array $ids, $order, $connectionName = null, $overwrite = false, array $by = null, $isFqcnEntity = false, bool $skipEmptyFixture = false)
     {
         // configure the bundle (needed if the bundle does not contain any Entities yet)
         $config = $this->registry->getManager($connectionName)->getConfiguration();
@@ -97,7 +97,12 @@ class DoctrineFixtureGenerator extends Generator
         /** @var EntityRepository $repo */
         $repo = $em->getRepository($class->name);
         if (empty($ids)) {
-            $items = $repo->findAll();
+            if (!is_null($by) && is_array($by)) {
+                $items = $repo->findBy($by);
+            }
+            else {
+                $items = $repo->findAll();
+            }
             $items = array_filter($items, function($item) use ($entityClass){
                if (get_class($item) === $entityClass){
                    return true;

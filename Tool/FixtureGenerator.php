@@ -681,6 +681,10 @@ use Doctrine\ORM\Mapping\ClassMetadata;
      */
     private function sanitizeSuspiciousSymbols($string)
     {
+        if (is_object($string)) {
+            $bits = explode('\\', get_class($string));
+            $string = end($bits);
+         }
         $sanitizedString = preg_replace('/[^a-zA-Z0-9_]/', '_', $string);
 
         return $sanitizedString;

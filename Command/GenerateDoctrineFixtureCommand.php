@@ -57,6 +57,7 @@ class GenerateDoctrineFixtureCommand extends GenerateDoctrineCommand
      */
     protected $entityManager;
 
+    public const SYMFONY_4_BUNDLE_ALIAS = "App";
 
     protected function configure()
     {
@@ -73,6 +74,7 @@ class GenerateDoctrineFixtureCommand extends GenerateDoctrineCommand
             ->addOption('snapshot', null, InputOption::VALUE_NONE, 'Create a full snapshot of DB.')
             ->addOption('overwrite', null, InputOption::VALUE_NONE, 'Overwrite entity fixture file if already exist.')
             ->addOption('ids', null, InputOption::VALUE_OPTIONAL, 'Only create fixture for this specific ID.')
+            ->addOption('by', null, InputOption::VALUE_OPTIONAL, 'Add a where clause')
             ->addOption('name', null, InputOption::VALUE_OPTIONAL,
                 'Give a specific name to the fixture or a prefix with snapshot option.')
             ->addOption('order', null, InputOption::VALUE_OPTIONAL, 'Give a specific order to the fixture.')
@@ -184,13 +186,14 @@ EOT
             $name = $input->getOption('name');
             $ids = $this->parseIds($input->getOption('ids'));
             $order = $input->getOption('order');
+            $by = $this->parseBy($input->getOption('by'));
 
             $this->writeSection($output, 'Entity generation');
             /** @var Kernel $kernel */
             $kernel = $this->getContainer()->get('kernel');
             $bundle = $kernel->getBundle($bundle);
 
-            $generator->generate($bundle, $entity, $name, array_values($ids), $order, $connectionName, $overwrite);
+            $generator->generate($bundle, $entity, $name, array_values($ids), $order, $connectionName, $overwrite, $by);
 
             $output->writeln('Generating the fixture code: <info>OK</info>');
         }
@@ -491,7 +494,7 @@ EOT
         }
 
         if ($bundle === null) {
-            throw new \LogicException("No bundle found for entity namespace ".$metaNamespace);
+            return self::SYMFONY_4_BUNDLE_ALIAS;
         }
 
         return $bundle;
@@ -540,6 +543,14 @@ EOT
         $ids = array_unique($ids);
 
         return $ids;
+    }
+
+    private function parseBy($input) {
+        if (is_null($input)) {
+            return null;
+        }
+        $value = explode('=', $input);
+        return [$value[0] => $value[1]];
     }
 
     /**
